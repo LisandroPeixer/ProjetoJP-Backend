@@ -1,5 +1,6 @@
 package com.pxr.projetoJP;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,13 +13,22 @@ import com.pxr.projetoJP.domain.Cidade;
 import com.pxr.projetoJP.domain.Cliente;
 import com.pxr.projetoJP.domain.Endereco;
 import com.pxr.projetoJP.domain.Estado;
+import com.pxr.projetoJP.domain.ItemPedido;
+import com.pxr.projetoJP.domain.Pagamento;
+import com.pxr.projetoJP.domain.PagamentoComBoleto;
+import com.pxr.projetoJP.domain.PagamentoComCartao;
+import com.pxr.projetoJP.domain.Pedido;
 import com.pxr.projetoJP.domain.Produto;
+import com.pxr.projetoJP.domain.enums.EstadoPagamento;
 import com.pxr.projetoJP.domain.enums.TipoCliente;
 import com.pxr.projetoJP.repositories.CategoriaRepository;
 import com.pxr.projetoJP.repositories.CidadeRepository;
 import com.pxr.projetoJP.repositories.ClienteRepository;
 import com.pxr.projetoJP.repositories.EnderecoRepository;
 import com.pxr.projetoJP.repositories.EstadoRepository;
+import com.pxr.projetoJP.repositories.ItemPedidoRepository;
+import com.pxr.projetoJP.repositories.PagamentoRepository;
+import com.pxr.projetoJP.repositories.PedidoRepository;
 import com.pxr.projetoJP.repositories.ProdutoRepository;
 
 @SpringBootApplication
@@ -38,6 +48,14 @@ public class ProjetoJpApplication implements CommandLineRunner {
 	private ClienteRepository clienteRepository;
 	@Autowired
 	private EnderecoRepository enderecoRepository;
+	
+	@Autowired
+	private PedidoRepository pedidoRepository;
+	@Autowired
+	private PagamentoRepository pagamentoRepository;
+	
+	@Autowired
+	private ItemPedidoRepository itemPedidoRepository;
 		
 	public static void main(String[] args) {
 		SpringApplication.run(ProjetoJpApplication.class, args);
@@ -116,5 +134,41 @@ public class ProjetoJpApplication implements CommandLineRunner {
 
 		clienteRepository.saveAll(Arrays.asList(cli1, cli2));
 		enderecoRepository.saveAll(Arrays.asList(e1, e2));
+		
+		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+
+		Pedido ped1 = new Pedido(null, sdf.parse("30/09/2017 10:32"), cli1, e1);
+		Pedido ped2 = new Pedido(null, sdf.parse("10/10/2017 19:35"), cli2, e2);
+		Pedido ped3 = new Pedido(null, sdf.parse("11/10/2017 23:35"), cli2, e2);
+
+		Pagamento pagto1 = new PagamentoComCartao(null, EstadoPagamento.QUITADO, ped1, 6);
+		ped1.setPagamento(pagto1);
+		Pagamento pagto2 = new PagamentoComBoleto(null, EstadoPagamento.CANCELADO, ped2, sdf.parse("20/10/2017 00:00"), null);
+		ped2.setPagamento(pagto2);
+		Pagamento pagto3 = new PagamentoComBoleto(null, EstadoPagamento.PENDENTE, ped3, sdf.parse("21/10/2017 00:00"), null);
+		ped3.setPagamento(pagto3);
+
+		cli1.getPedidos().addAll(Arrays.asList(ped1));
+		cli2.getPedidos().addAll(Arrays.asList(ped2, ped3));
+		
+		pedidoRepository.saveAll(Arrays.asList(ped1, ped2, ped3));
+		pagamentoRepository.saveAll(Arrays.asList(pagto1, pagto2, pagto3));
+		
+		ItemPedido ip1 = new ItemPedido(ped1, p3, 60.00, 10, 540.00);
+		ItemPedido ip2 = new ItemPedido(ped1, p5, 90.00, 30, 810.00);
+		ItemPedido ip3 = new ItemPedido(ped2, p1, 0.00, 3, 210.00);
+		ItemPedido ip4 = new ItemPedido(ped3, p1, 70.00, 10, 630.00);
+
+
+		ped1.getItens().addAll(Arrays.asList(ip1, ip2));
+		ped2.getItens().addAll(Arrays.asList(ip3));
+		ped3.getItens().addAll(Arrays.asList(ip4));
+
+		p1.getItens().addAll(Arrays.asList(ip3, ip4));
+		p3.getItens().addAll(Arrays.asList(ip1));
+		p5.getItens().addAll(Arrays.asList(ip2));
+
+		itemPedidoRepository.saveAll(Arrays.asList(ip1, ip2, ip3, ip4));
+		
 	}
 } 
